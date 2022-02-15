@@ -1,6 +1,5 @@
 use std::{env, fs::OpenOptions, io::Write, path::Path};
 
-use chrono;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -12,7 +11,9 @@ struct Settings {
 fn main() {
     match envy::prefixed("QSHARD_").from_env::<Settings>() {
         Ok(config) => {
-            let daily_format = config.daily_format.unwrap_or("%Y-%m-%d".into());
+            let daily_format = config
+                .daily_format
+                .unwrap_or_else(|| String::from("%Y-%m-%d"));
             let date = chrono::offset::Local::now();
             let daily_file = format!("{0}.md", date.format(&daily_format));
             let dailiy_file_path = Path::new(&config.daily_path).join(daily_file);
