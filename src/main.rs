@@ -1,4 +1,9 @@
-use std::{env, fs::OpenOptions, io::Write, path::Path};
+use std::{
+    env,
+    fs::{File, OpenOptions},
+    io::Write,
+    path::Path,
+};
 
 use serde::Deserialize;
 
@@ -6,6 +11,24 @@ use serde::Deserialize;
 struct Settings {
     daily_path: String,
     daily_format: Option<String>,
+}
+
+/** The prefix for "watch log" entries. */
+const WATCHED_PREFIX: &str = "@W ";
+/** The prefix for "listened log" entries. */
+const LISTENED_PREFIX: &str = "@A ";
+
+fn append_line(file: &mut File, timestamp: &str, entry: &str) {
+    let message = match entry {
+        x if x.starts_with(WATCHED_PREFIX) => format!("🍿:: {}", x.replace(WATCHED_PREFIX, "")),
+        x if x.starts_with(LISTENED_PREFIX) => format!("🎧:: {}", x.replace(LISTENED_PREFIX, "")),
+        _ => entry.to_owned(),
+    };
+    let total_message = format!("\n- {}\n\t- {}", timestamp, message);
+
+    if let Err(e) = writeln!(file, "{}", total_message) {
+        eprintln!("Couldn't write to file: {}", e);
+    }
 }
 
 fn main() {
@@ -21,7 +44,6 @@ fn main() {
             // Assemble the message
             let timestamp = date.format("%H:%M");
             let message = env::args().collect::<Vec<String>>()[1..].join(" ");
-            let total_message = format!("\n- {}\n\t- {}", timestamp, message);
 
             // Append the message at the end of the file.
             let mut file = match OpenOptions::new().append(true).open(daily_file_path) {
@@ -33,10 +55,7 @@ fn main() {
                     daily_file, err
                 ),
             };
-
-            if let Err(e) = writeln!(file, "{}", total_message) {
-                eprintln!("Couldn't write to file: {}", e);
-            }
+            append_line(&mut file, &timestamp.to_string(), &message)
         }
         Err(error) => panic!("{:#?}", error),
     }
