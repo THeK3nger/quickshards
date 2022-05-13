@@ -10,9 +10,19 @@ This is a personal executable to quickly append logs to my Obsidian daily note. 
 cargo instal --git git@github.com:THeK3nger/quickshards.git
 ```
 
-- Set the environment variable `QSHARD_DAILY_PATH` to your Daily Notes location.
+- Create a new configuration file with
 
-- Set the environment variable `QSHARD_DAILY_FORMAT` to the format of your Daily Notes filename (default is `%Y-%m-%d` for notes such as `2022-02-15.md`).
+```bash
+qs edit
+```
+
+- Add your configuration. Use this as an example
+
+```toml
+obsidian_vault_path = "/Users/davide/Dropbox/Hypomnemata"
+daily_path = "Daily Notes"
+working_memory_file_path = "__WD.md"
+```
 
 - Add an entry with
 
