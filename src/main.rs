@@ -21,6 +21,13 @@ struct Settings {
     working_memory_file_path: Option<String>,
     #[serde(default = "editor_default")]
     text_editor: String,
+    tags: Vec<Tag>,
+}
+
+#[derive(Deserialize, Debug)]
+struct Tag {
+    tag: String,
+    value: String,
 }
 
 fn editor_default() -> String {
@@ -45,11 +52,6 @@ struct Cli {
     /// The messge of the entry you want to add.
     text: Option<String>,
 }
-
-/** The prefix for "watch log" entries. */
-const WATCHED_PREFIX: &str = "@W ";
-/** The prefix for "listened log" entries. */
-const LISTENED_PREFIX: &str = "@A ";
 
 fn edit_configuration_file(editor: &str) {
     let config_dir = dirs::config_dir().unwrap().join("QuickShards");
@@ -81,19 +83,19 @@ fn load_configuration_file() -> Settings {
     }
 }
 
+fn handle_tags(tags: &Vec<Tag>, message: String) -> String {
+    for tag in tags {
+        if message.starts_with(&tag.tag) {
+            return format!("{}:: {}", tag.value, message.replace(&tag.tag, ""));
+        }
+    }
+    message
+}
+
 fn append_log_line(file: &mut File, timestamp: &str, entry: &str) {
-    let message = match entry {
-        x if x.starts_with(WATCHED_PREFIX) => {
-            format!("Movie🍿:: {}", x.replace(WATCHED_PREFIX, ""))
-        }
-        x if x.starts_with(LISTENED_PREFIX) => {
-            format!("Music🎧:: {}", x.replace(LISTENED_PREFIX, ""))
-        }
-        _ => entry.to_owned(),
-    };
-    let total_message_body = message
+    let total_message_body = entry
         .lines()
-        .filter(|&x| x != "")
+        .filter(|&x| !x.is_empty())
         .map(|x| format!("\t- {}", x))
         .collect::<Vec<String>>();
 
@@ -144,11 +146,13 @@ fn main() {
         exit(0)
     }
 
-    let message = if !cli.interactive {
+    let mut message = if !cli.interactive {
         cli.text.unwrap()
     } else {
         interactive_editor(&config.text_editor)
     };
+
+    message = handle_tags(&config.tags, message);
 
     if cli.working_memory {
         let working_memory_path =
