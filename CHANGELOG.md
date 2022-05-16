@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.0
+
+### New
+
+- Add possibility to entry logs and working memories using an external editor.
+
 ## v0.4.1
 
 ### No longer broken
