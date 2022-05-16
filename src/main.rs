@@ -1,5 +1,4 @@
 use std::{
-    env,
     fs::{self, File, OpenOptions},
     io::Write,
     path::Path,
@@ -121,7 +120,8 @@ fn main() {
                 working_memory_path, err
             ),
         };
-        append_line(&mut file, &cli.text.unwrap())
+        append_line(&mut file, &cli.text.unwrap());
+        exit(0);
     }
 
     let daily_format = config
@@ -135,7 +135,6 @@ fn main() {
 
     // Assemble the message
     let timestamp = date.format("%H:%M");
-    let message = env::args().collect::<Vec<String>>()[1..].join(" ");
 
     // Append the message at the end of the file.
     let mut file = match OpenOptions::new().append(true).open(daily_file_path) {
@@ -147,5 +146,5 @@ fn main() {
                     daily_file, err
                 ),
             };
-    append_log_line(&mut file, &timestamp.to_string(), &message)
+    append_log_line(&mut file, &timestamp.to_string(), &(cli.text.unwrap()))
 }
