@@ -138,6 +138,12 @@ fn main() {
         exit(0)
     }
 
+    let message = if !cli.interactive {
+        cli.text.unwrap()
+    } else {
+        interactive_editor(&config.text_editor)
+    };
+
     if cli.working_memory {
         let working_memory_path =
             Path::new(&config.obsidian_vault_path).join(&config.working_memory_file_path.unwrap());
@@ -149,7 +155,7 @@ fn main() {
                 working_memory_path, err
             ),
         };
-        append_line(&mut file, &cli.text.unwrap());
+        append_line(&mut file, &message);
         exit(0);
     }
 
@@ -175,12 +181,6 @@ fn main() {
                     daily_file, err
                 ),
             };
-
-    let message = if !cli.interactive {
-        cli.text.unwrap()
-    } else {
-        interactive_editor(&config.text_editor)
-    };
 
     append_log_line(&mut file, &timestamp.to_string(), &message)
 }
