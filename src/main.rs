@@ -10,12 +10,35 @@ use std::process::Command;
 
 use serde::Deserialize;
 
+use clap::Parser;
+
 #[derive(Deserialize, Debug)]
 struct Settings {
     obsidian_vault_path: String,
     daily_path: String,
     daily_format: Option<String>,
     working_memory_file_path: Option<String>,
+    #[serde(default = "editor_default")]
+    text_editor: String,
+}
+
+fn editor_default() -> String {
+    return "vim".to_owned();
+}
+
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Cli {
+    /// Write on the Working Memory File.
+    #[clap(short, long)]
+    working_memory: bool,
+
+    /// Quick open settings editor.
+    #[clap(short, long)]
+    edit_settings: bool,
+
+    /// The messge of the entry you want to add.
+    text: Option<String>,
 }
 
 /** The prefix for "watch log" entries. */
@@ -23,11 +46,11 @@ const WATCHED_PREFIX: &str = "@W ";
 /** The prefix for "listened log" entries. */
 const LISTENED_PREFIX: &str = "@A ";
 
-fn edit_configuration_file() {
+fn edit_configuration_file(editor: &str) {
     let config_dir = dirs::config_dir().unwrap().join("QuickShards");
     fs::create_dir_all(&config_dir).unwrap();
     let config_file_path = Path::new(&config_dir).join("config.toml");
-    Command::new("vim")
+    Command::new(editor)
         .arg(config_file_path)
         .spawn()
         .expect("Cannot open VIM.")
@@ -53,7 +76,7 @@ fn load_configuration_file() -> Settings {
     }
 }
 
-fn append_line(file: &mut File, timestamp: &str, entry: &str) {
+fn append_log_line(file: &mut File, timestamp: &str, entry: &str) {
     let message = match entry {
         x if x.starts_with(WATCHED_PREFIX) => {
             format!("Movie🍿:: {}", x.replace(WATCHED_PREFIX, ""))
@@ -70,12 +93,37 @@ fn append_line(file: &mut File, timestamp: &str, entry: &str) {
     }
 }
 
+fn append_line(file: &mut File, entry: &str) {
+    let message = format!("- {}", entry);
+
+    if let Err(e) = writeln!(file, "{}", message) {
+        eprintln!("Couldn't write to file: {}", e);
+    }
+}
+
 fn main() {
-    if env::args().nth(1).unwrap() == "edit" {
-        edit_configuration_file();
+    let cli = Cli::parse();
+    let config = load_configuration_file();
+
+    if cli.edit_settings {
+        edit_configuration_file(&config.text_editor);
         exit(0)
     }
-    let config = load_configuration_file();
+
+    if cli.working_memory {
+        let working_memory_path =
+            Path::new(&config.obsidian_vault_path).join(&config.working_memory_file_path.unwrap());
+        // Append the message at the end of the file.
+        let mut file = match OpenOptions::new().append(true).open(&working_memory_path) {
+            Ok(f) => f,
+            Err(err) => panic!(
+                "Cannot open file '{:?}'. ERROR IS: {:#?}",
+                working_memory_path, err
+            ),
+        };
+        append_line(&mut file, &cli.text.unwrap())
+    }
+
     let daily_format = config
         .daily_format
         .unwrap_or_else(|| String::from("%Y-%m-%d"));
@@ -84,7 +132,7 @@ fn main() {
     let daily_file_path = Path::new(&config.obsidian_vault_path)
         .join(&config.daily_path)
         .join(&daily_file);
-    println!("{:?}", daily_file_path);
+
     // Assemble the message
     let timestamp = date.format("%H:%M");
     let message = env::args().collect::<Vec<String>>()[1..].join(" ");
@@ -99,5 +147,5 @@ fn main() {
                     daily_file, err
                 ),
             };
-    append_line(&mut file, &timestamp.to_string(), &message)
+    append_log_line(&mut file, &timestamp.to_string(), &message)
 }
