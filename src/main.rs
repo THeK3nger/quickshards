@@ -1,4 +1,5 @@
 use std::{
+    env::temp_dir,
     fs::{self, File, OpenOptions},
     io::Write,
     path::Path,
@@ -10,6 +11,7 @@ use std::process::Command;
 use serde::Deserialize;
 
 use clap::Parser;
+use uuid::Uuid;
 
 #[derive(Deserialize, Debug)]
 struct Settings {
@@ -35,6 +37,10 @@ struct Cli {
     /// Quick open settings editor.
     #[clap(short, long)]
     edit_settings: bool,
+
+    /// Edit Entry in Text Editor
+    #[clap(short, long)]
+    interactive: bool,
 
     /// The messge of the entry you want to add.
     text: Option<String>,
@@ -100,6 +106,29 @@ fn append_line(file: &mut File, entry: &str) {
     }
 }
 
+fn interactive_editor(editor: &str) -> String {
+    let mut tmp_dir = temp_dir();
+    let filename = format!("{}.md", Uuid::new_v4());
+    let tmp_file_path = Path::new(&tmp_dir).join(&filename);
+
+    Command::new(editor)
+        .arg(&tmp_file_path)
+        .spawn()
+        .expect("Cannot open VIM.")
+        .wait()
+        .unwrap();
+
+    match fs::read_to_string(&tmp_file_path) {
+        Ok(config_str) => return config_str,
+        Err(err) => {
+            panic!(
+                "Cannot open file '{:?}'. ERROR IS: {:#?}",
+                tmp_file_path, err
+            )
+        }
+    }
+}
+
 fn main() {
     let cli = Cli::parse();
     let config = load_configuration_file();
@@ -146,5 +175,12 @@ fn main() {
                     daily_file, err
                 ),
             };
-    append_log_line(&mut file, &timestamp.to_string(), &(cli.text.unwrap()))
+
+    let message = if !cli.interactive {
+        cli.text.unwrap()
+    } else {
+        interactive_editor(&config.text_editor)
+    };
+
+    append_log_line(&mut file, &timestamp.to_string(), &message)
 }
