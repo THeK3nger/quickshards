@@ -24,7 +24,7 @@ struct Settings {
 }
 
 fn editor_default() -> String {
-    return "vim".to_owned();
+    "vim".to_owned()
 }
 
 #[derive(Parser, Debug)]
@@ -107,7 +107,7 @@ fn append_line(file: &mut File, entry: &str) {
 }
 
 fn interactive_editor(editor: &str) -> String {
-    let mut tmp_dir = temp_dir();
+    let tmp_dir = temp_dir();
     let filename = format!("{}.md", Uuid::new_v4());
     let tmp_file_path = Path::new(&tmp_dir).join(&filename);
 
@@ -119,7 +119,7 @@ fn interactive_editor(editor: &str) -> String {
         .unwrap();
 
     match fs::read_to_string(&tmp_file_path) {
-        Ok(config_str) => return config_str,
+        Ok(config_str) => config_str,
         Err(err) => {
             panic!(
                 "Cannot open file '{:?}'. ERROR IS: {:#?}",
