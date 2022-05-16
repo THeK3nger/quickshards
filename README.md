@@ -13,7 +13,7 @@ cargo instal --git git@github.com:THeK3nger/quickshards.git
 - Create a new configuration file with
 
 ```bash
-qs edit
+qs -e
 ```
 
 - Add your configuration. Use this as an example
@@ -21,13 +21,13 @@ qs edit
 ```toml
 obsidian_vault_path = "/Users/davide/Dropbox/Hypomnemata"
 daily_path = "Daily Notes"
-working_memory_file_path = "__WD.md"
+working_memory_file_path = "__WM.md"
 ```
 
 - Add an entry with
 
 ```bash
-qs Whatever I want to add to my note.
+qs "Whatever I want to add to my note."
 ```
 
 _(there is not a lot of customization because this is tailored to my notes, but I am open to PRs if you want)_.
