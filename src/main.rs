@@ -91,7 +91,13 @@ fn append_log_line(file: &mut File, timestamp: &str, entry: &str) {
         }
         _ => entry.to_owned(),
     };
-    let total_message = format!("\n- {}\n\t- {}", timestamp, message);
+    let total_message_body = message
+        .lines()
+        .filter(|&x| x != "")
+        .map(|x| format!("\t- {}", x))
+        .collect::<Vec<String>>();
+
+    let total_message = format!("\n- {}\n{}", timestamp, total_message_body.join("\n"));
 
     if let Err(e) = writeln!(file, "{}", total_message) {
         eprintln!("Couldn't write to file: {}", e);
