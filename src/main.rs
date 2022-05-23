@@ -73,7 +73,7 @@ impl QuickShards {
             .daily_format
             .clone()
             .unwrap_or_else(|| "%Y-%m-%d".to_owned());
-        let obsidian_vault_path = &self.config.text_editor.clone();
+        let obsidian_vault_path = &self.config.obsidian_vault_path.clone();
 
         if self.cli.edit_settings {
             edit_configuration_file(text_editor);
