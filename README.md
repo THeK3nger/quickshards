@@ -19,7 +19,7 @@ qs -e
 - Add your configuration. Use this as an example
 
 ```toml
-obsidian_vault_path = "/Users/davide/Dropbox/Hypomnemata"
+obsidian_vault_path = "/Users/<your_user>/Path/To/Vault"
 daily_path = "Daily Notes"
 working_memory_file_path = "__WM.md"
 ```
